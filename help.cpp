@@ -52,7 +52,7 @@ void printUsage(char* argv[]){
 }
 
 
-void getLastLine(const std::string& target_dir,long int* nray,long int* exclude,double* ttot){
+void getLastLine(const std::string& target_dir,long int* nray,long int* exclude,float* ttot){
   std::string line;
   std::ifstream infile( (target_dir+"meta0.dat").c_str() );
   
@@ -61,7 +61,7 @@ void getLastLine(const std::string& target_dir,long int* nray,long int* exclude,
   }
   //  cout << line << endl;
   char dum[50];
-  sscanf(line.c_str(),"%27c%12li%12c%12li%49c%lf\n",dum,nray,dum,exclude,dum,ttot);
+  sscanf(line.c_str(),"%27c%12li%12c%12li%49c%f\n",dum,nray,dum,exclude,dum,ttot);
 }
 
 
@@ -69,16 +69,16 @@ int setParams(int argc,char* argv[],params &parameters){
   std::string mode          = DEFAULT_MODE;
   std::string target_dir    = DEFAULT_TARGET_DIR;
   std::string lens_pos      = DEFAULT_LENS_POS;
-  double  kappa              = DEFAULT_KAPPA;
-  double  s                  = DEFAULT_S;
-  double  gamma              = DEFAULT_GAMMA;
+  float  kappa              = DEFAULT_KAPPA;
+  float  s                  = DEFAULT_S;
+  float  gamma              = DEFAULT_GAMMA;
   int    resolution         = DEFAULT_RESOLUTION;
-  double  source_scale       = DEFAULT_SOURCE_SCALE;
-  double  avg_ray_count      = DEFAULT_AVG_RAY_COUNT;
-  double  lens_scale_fudge_1 = DEFAULT_LENS_SCALE_FUDGE_1;
-  double  lens_scale_fudge_2 = DEFAULT_LENS_SCALE_FUDGE_2;
-  double  image_scale_fudge  = DEFAULT_IMAGE_SCALE_FUDGE;
-  double  mass               = DEFAULT_MASS;
+  float  source_scale       = DEFAULT_SOURCE_SCALE;
+  float  avg_ray_count      = DEFAULT_AVG_RAY_COUNT;
+  float  lens_scale_fudge_1 = DEFAULT_LENS_SCALE_FUDGE_1;
+  float  lens_scale_fudge_2 = DEFAULT_LENS_SCALE_FUDGE_2;
+  float  image_scale_fudge  = DEFAULT_IMAGE_SCALE_FUDGE;
+  float  mass               = DEFAULT_MASS;
   std::vector<int> devices;
   std::vector<int> device_idx_list;
 
@@ -264,8 +264,8 @@ int setParams(int argc,char* argv[],params &parameters){
 
 
 
-  double kappa_s    = kappa*s;
-  double kappa_star = kappa - kappa_s;
+  float kappa_s    = kappa*s;
+  float kappa_star = kappa - kappa_s;
 
   parameters.mode               = mode;
   parameters.target_dir         = target_dir;
@@ -285,9 +285,9 @@ int setParams(int argc,char* argv[],params &parameters){
 
   //  int ndevices = devices.size();
   parameters.total_rays  = avg_ray_count*avg_ray_count*1.e4;
-  //cycles = (long)ceilf((double)((long)avg_ray_count*(long)resolution*(long)resolution)/(CHUNK_SIZE*ndevices));
-  //parameters.cycles      = (long)ceilf((double)(avg_ray_count*avg_ray_count*1.e4)/(CHUNK_SIZE*ndevices));
-  parameters.cycles      = (long)ceilf((double)(avg_ray_count*avg_ray_count*1.e4)/(CHUNK_SIZE));
+  //cycles = (long)ceilf((float)((long)avg_ray_count*(long)resolution*(long)resolution)/(CHUNK_SIZE*ndevices));
+  //parameters.cycles      = (long)ceilf((float)(avg_ray_count*avg_ray_count*1.e4)/(CHUNK_SIZE*ndevices));
+  parameters.cycles      = (long)ceilf((float)(avg_ray_count*avg_ray_count*1.e4)/(CHUNK_SIZE));
   parameters.cycles_done = 0;
   parameters.nray        = 0;
   parameters.exclude     = 0;
@@ -296,7 +296,7 @@ int setParams(int argc,char* argv[],params &parameters){
   if( mode == "restart" ){
     parameters.lens_pos = 'c';
     getLastLine(parameters.target_dir,&parameters.nray,&parameters.exclude,&parameters.ttot);
-    parameters.cycles_done = (long) ceilf( (double) (parameters.nray/CHUNK_SIZE) );
+    parameters.cycles_done = (long) ceilf( (float) (parameters.nray/CHUNK_SIZE) );
   }
 
 

@@ -7,18 +7,18 @@
 #include "cudaLens.hpp"
 
 
-__global__ void lensPartialCalc(double* d_lx1, double* d_lx2, double* d_lm, double* d_x1, double* d_x2, double* d_p1, double* d_p2, const int Nl);
-__global__ void lensFinishCalc(double* d_x1, double* d_x2, double* d_p1, double* d_p2, double ks, double g);
-__device__ inline void atomicDoubleAdd(double *address, double val);
+__global__ void lensPartialCalc(float* d_lx1, float* d_lx2, float* d_lm, float* d_x1, float* d_x2, float* d_p1, float* d_p2, const int Nl);
+__global__ void lensFinishCalc(float* d_x1, float* d_x2, float* d_p1, float* d_p2, float ks, float g);
+__device__ inline void atomicFloatAdd(float *address, float val);
 
 
 //MAIN CALCULATION: Calculating total deflections
 //==========================================================
-void runCudaLens(double* d_lx1,double* d_lx2,double* d_lm,double* d_x1,double* d_x2,double* d_p1,double* d_p2,long Nl,double ks,double g,Stopwatch& kernelTimer1,Stopwatch& kernelTimer2){
+void runCudaLens(float* d_lx1,float* d_lx2,float* d_lm,float* d_x1,float* d_x2,float* d_p1,float* d_p2,long Nl,float ks,float g,Stopwatch& kernelTimer1,Stopwatch& kernelTimer2){
   cudaError_t err;
   dim3 threads( BLOCK_SIZE, 1, 1);
   dim3 grid( CHUNK_SIZE/threads.x, 1, 1);
-  grid.y = (int) ceil( (double)Nl/(double)BLOCK_SIZE );
+  grid.y = (int) ceil( (float)Nl/(float)BLOCK_SIZE );
 
   kernelTimer1.start();
   lensPartialCalc<<<grid,threads>>>(d_lx1, d_lx2, d_lm, d_x1, d_x2, d_p1, d_p2, Nl);
@@ -46,25 +46,25 @@ void runCudaLens(double* d_lx1,double* d_lx2,double* d_lm,double* d_x1,double* d
 
 //MAIN CALCULATION: Calculating partial deflections
 //==========================================================
-__global__ void lensPartialCalc(double* d_lx1, double* d_lx2, double* d_lm, double* d_x1, double* d_x2, double* d_p1, double* d_p2, const int Nl){
+__global__ void lensPartialCalc(float* d_lx1, float* d_lx2, float* d_lm, float* d_x1, float* d_x2, float* d_p1, float* d_p2, const int Nl){
   unsigned int tx = threadIdx.x;
   unsigned int gx = blockIdx.x * blockDim.x + threadIdx.x;
   unsigned int gy = blockIdx.y * blockDim.x + threadIdx.x;
 
 
-  __shared__ double3 lens[BLOCK_SIZE];
+  __shared__ float3 lens[BLOCK_SIZE];
   lens[tx].x = d_lx1[gy];
   lens[tx].y = d_lx2[gy];
   lens[tx].z = d_lm[gy];
   __syncthreads();
 
 
-  double x1 = d_x1[gx];
-  double x2 = d_x2[gx];
-  double p1 = 0.;
-  double p2 = 0.;
-  double d,d1,d2;
-  double3 ll;
+  float x1 = d_x1[gx];
+  float x2 = d_x2[gx];
+  float p1 = 0.;
+  float p2 = 0.;
+  float d,d1,d2;
+  float3 ll;
   unsigned int by = Nl - blockIdx.y * BLOCK_SIZE;
   if(by > BLOCK_SIZE){  by = BLOCK_SIZE;  }
 
@@ -83,14 +83,14 @@ __global__ void lensPartialCalc(double* d_lx1, double* d_lx2, double* d_lm, doub
   }
 
   
-  atomicDoubleAdd( &d_p1[gx], p1);
-  atomicDoubleAdd( &d_p2[gx], p2);
+  atomicFloatAdd( &d_p1[gx], p1);
+  atomicFloatAdd( &d_p2[gx], p2);
 }
 
 
 //MAIN CALCULATION: Finalizing deflections
 //==========================================================
-__global__ void lensFinishCalc(double* d_x1, double* d_x2, double* d_p1, double* d_p2, double ks, double g){
+__global__ void lensFinishCalc(float* d_x1,float* d_x2,float* d_p1,float* d_p2, float ks, float g){
 	unsigned int gx = blockIdx.x * BLOCK_SIZE + threadIdx.x;
 	d_x1[gx] = d_x1[gx] * (1.0 - ks - g) - d_p1[gx] ;
 	d_x2[gx] = d_x2[gx] * (1.0 - ks + g) - d_p2[gx];
@@ -99,9 +99,9 @@ __global__ void lensFinishCalc(double* d_x1, double* d_x2, double* d_p1, double*
 
 //MAIN CALCULATION: Atomic add on GPU memory locations
 //==========================================================
-__device__ inline void atomicDoubleAdd(double *address, double val){
+__device__ inline void atomicFloatAdd(float* address,float val){
   //       int i_val = __float_as_int(val);
-       int i_val = __double2int_rn(val);
+       int i_val = __float2int_rn(val);
        int tmp0 = 0;
        int tmp1;
 
@@ -109,7 +109,7 @@ __device__ inline void atomicDoubleAdd(double *address, double val){
        {
                tmp0  = tmp1;
 	       //               i_val = __float_as_int(val + __int_as_float(tmp1));
-               i_val = __double2int_rn(val + __int2double_rn(tmp1));
+               i_val = __float2int_rn(val + __int2float_rn(tmp1));
        }
 }
 
@@ -146,11 +146,11 @@ void _cudaGetDevName(char* name,int* rate, int* mps){
   *mps  = prop.multiProcessorCount;
 }
 
-void lensCudaMalloc(double** data, size_t size){
+void lensCudaMalloc(float** data, size_t size){
   cudaMalloc((void**) data,size);
 }
 
-void lensCudaFree(double** data){
+void lensCudaFree(float** data){
   cudaFree(*data);
   data = NULL;
 }

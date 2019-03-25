@@ -15,11 +15,11 @@
 
 #include "stopwatch.hpp"
 
-void runCudaLens(double* d_lx1, double* d_lx2, double* d_lm, double* d_x1, double* d_x2, double* d_p1, double* d_p2, long Nl, double ks,double g,Stopwatch& kernelTimer1,Stopwatch& kernelTimer2);
+void runCudaLens(float* d_lx1,float* d_lx2,float* d_lm,float* d_x1,float* d_x2,float* d_p1,float* d_p2, long Nl, float ks,float g,Stopwatch& kernelTimer1,Stopwatch& kernelTimer2);
 
 void myGetDeviceCount(int* raw_device_count);
 void _cudaGetDevName(char* name,int* rate, int* mps);
 int  _cudaGetDeviceCount();
 void _cudaSetDevice(int device);
-void lensCudaMalloc(double** data, size_t size);
-void lensCudaFree(double** data);
+void lensCudaMalloc(float** data, size_t size);
+void lensCudaFree(float** data);

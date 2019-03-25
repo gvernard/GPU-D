@@ -45,7 +45,7 @@ int timeMachineSeed(std::vector<int> dev_list){
   return final;
 }
 
-void genRandomPositions(double* data1,double* data2,int chunkSize,double Ix,double Iy,long int seed){
+void genRandomPositions(float* data1,float* data2,int chunkSize,float Ix,float Iy,long int seed){
   srand48(seed);
   for( long i=0; i<chunkSize; i++ ){
     data1[i] = (drand48()*2.0-1.0)*Ix;
@@ -53,7 +53,7 @@ void genRandomPositions(double* data1,double* data2,int chunkSize,double Ix,doub
   }
 }
 
-void genRandomPositions(double** data1,double** data2,int ndevices,int chunkSize,double Ix,double Iy,long int seed){
+void genRandomPositions(float** data1,float** data2,int ndevices,int chunkSize,float Ix,float Iy,long int seed){
 
   for(int d=0;d<ndevices;d++){
     srand48(seed+d);
@@ -64,8 +64,8 @@ void genRandomPositions(double** data1,double** data2,int ndevices,int chunkSize
   }
 }
 
-void binSourcePlane(long long int* nray,long long int* exclude,double** source_plane,double* y1,double* y2,int res,double ss2){
-  double scalingFy = ((double)(res/2)/(double)(ss2));
+void binSourcePlane(long long int* nray,long long int* exclude,float** source_plane,float* y1,float* y2,int res,float ss2){
+  float scalingFy = ((float)(res/2)/(float)(ss2));
   int i,j;
 
   for(long n=0; n<CHUNK_SIZE; n++){
@@ -81,8 +81,8 @@ void binSourcePlane(long long int* nray,long long int* exclude,double** source_p
   }
 }
 
-void binSourcePlane(long long int* nray,long long int* exclude,int ndevices,double** source_plane,double** y1,double** y2,int res,double ss2,long m,long cycles){
-  double scalingFy = ((double)(res/2)/(double)(ss2));
+void binSourcePlane(long long int* nray,long long int* exclude,int ndevices,float** source_plane,float** y1,float** y2,int res,float ss2,long m,long cycles){
+  float scalingFy = ((float)(res/2)/(float)(ss2));
   int i,j;
 
   for(int d=0;d<ndevices;d++){
@@ -107,31 +107,31 @@ void binSourcePlane(long long int* nray,long long int* exclude,int ndevices,doub
 
 
 
-ImagePlane setupLensPositions(const char* lp_file,long Nl, double rx, double ry, double mass){
+ImagePlane setupLensPositions(const char* lp_file,long Nl, float rx, float ry, float mass){
   ImagePlane IP;
   long i;
   
   /* Random lens positions within the image plane */
-  IP.lx1 = (double *) calloc(Nl, sizeof(double));
+  IP.lx1 = (float*) calloc(Nl, sizeof(float));
   if(IP.lx1 == NULL){ cout << "Error: out of mem\n"; }
-  IP.lx2 = (double *) calloc(Nl, sizeof(double));
+  IP.lx2 = (float*) calloc(Nl, sizeof(float));
   if(IP.lx2 == NULL){ cout << "Error: out of mem\n"; }
-  IP.lm  = (double *) calloc(Nl, sizeof(double));
+  IP.lm  = (float*) calloc(Nl, sizeof(float));
   if(IP.lm == NULL){  cout << "Error: out of mem\n"; }
   IP.Nl = Nl;
-  IP.Nleff = (int) ceil( (double)Nl/(double)BLOCK_SIZE ) * BLOCK_SIZE;//required for correct memory management on the GPU
+  IP.Nleff = (int) ceil( (float)Nl/(float)BLOCK_SIZE ) * BLOCK_SIZE;//required for correct memory management on the GPU
 
 
   ofstream o_stream(lp_file);
-  double x,y;
+  float x,y;
   long it;
   for (i=0;i<Nl;i++){
     // Create a uniform distribution inside an ellipse
-    x = (double)(drand48()*2.0-1.0) * rx;
-    y = (double)(drand48()*2.0-1.0) * ry;
+    x = (float)(drand48()*2.0-1.0) * rx;
+    y = (float)(drand48()*2.0-1.0) * ry;
     while( x*x/(rx*rx)+y*y/(ry*ry) > 1.0 ){
-      x = (double)(drand48()*2.0-1.0) * rx;
-      y = (double)(drand48()*2.0-1.0) * ry;
+      x = (float)(drand48()*2.0-1.0) * rx;
+      y = (float)(drand48()*2.0-1.0) * ry;
     }
     it        = (long)(x*1.e4);
     IP.lx1[i] = it/1.e4;
@@ -140,7 +140,7 @@ ImagePlane setupLensPositions(const char* lp_file,long Nl, double rx, double ry,
     IP.lm[i]  = floor(mass*1.e3)/1.e3;
     drand48();// <--ATTENTION: ONLY FOR CONSISTENCY OF RANDOM NUMBER GENERATOR WITH PREVIOUS VERSIONS OF THE CODE
     
-    //Generated random numbers are written to the 7th decimal (precision of double)
+    //Generated random numbers are written to the 7th decimal (precision of float)
     o_stream << std::fixed << setw(10) << setprecision(4) << IP.lx1[i] << setw(10) << setprecision(4) << IP.lx2[i] << setw(5) << setprecision(2) << IP.lm[i] << endl;
   }
   o_stream.close();
@@ -148,7 +148,7 @@ ImagePlane setupLensPositions(const char* lp_file,long Nl, double rx, double ry,
   return IP;
 }
 
-ImagePlane readLensPositions(const char* lp_file, long* lens_count, double rx, double ry, double mass){
+ImagePlane readLensPositions(const char* lp_file, long* lens_count, float rx, float ry, float mass){
     ImagePlane IP;
 
     std::string str;
@@ -163,16 +163,16 @@ ImagePlane readLensPositions(const char* lp_file, long* lens_count, double rx, d
 
     long Nl = i;
     *lens_count = Nl;
-    IP.lx1 = (double *)calloc(Nl, sizeof(double));
+    IP.lx1 = (float*) calloc(Nl, sizeof(float));
     if(IP.lx1 == NULL){ cout << "Error: out of mem\n"; }
-    IP.lx2 = (double *)calloc(Nl, sizeof(double));
+    IP.lx2 = (float*) calloc(Nl, sizeof(float));
     if(IP.lx2 == NULL){ cout << "Error: out of mem\n"; }
-    IP.lm = (double *)calloc(Nl, sizeof(double));
+    IP.lm = (float*) calloc(Nl, sizeof(float));
     if(IP.lm == NULL){  cout << "Error: out of mem\n"; }
     IP.Nl = Nl;
-    IP.Nleff = (int) ceil( (double)Nl/(double)BLOCK_SIZE ) * BLOCK_SIZE;
+    IP.Nleff = (int) ceil( (float)Nl/(float)BLOCK_SIZE ) * BLOCK_SIZE;
 
-    double x,y,m;
+    float x,y,m;
     myfile.open(lp_file);
     for(i=0;i<Nl;i++){
       myfile >> x >> y >> m;
@@ -185,12 +185,12 @@ ImagePlane readLensPositions(const char* lp_file, long* lens_count, double rx, d
     return IP;
 }
 
-double** createMatrixDouble(int xdim,int ydim){
+float** createMatrixFloat(int xdim,int ydim){
  int i = 0, j = 0;
 
- double** data = (double** )calloc(xdim, sizeof(double* ));
+ float** data = (float**) calloc(xdim, sizeof(float*));
  for (i=0;i<xdim;i++){
-   data[i] = (double* )calloc(ydim, sizeof(double));    
+   data[i] = (float*) calloc(ydim, sizeof(float));    
    for (j=0;j<ydim;j++){
      data[i][j] = 0.0;
    }
@@ -199,29 +199,29 @@ double** createMatrixDouble(int xdim,int ydim){
 }
 
 
-void writeSnapshot(const std::string& target_dir,double** y,double k,double g,double s,double ss2,double is_x,double is_y,long long int nray,long long int exclude,int res){
+void writeSnapshot(const std::string& target_dir,float** y,float k,float g,float s,float ss2,float is_x,float is_y,long long int nray,long long int exclude,int res){
   //Write output
-  double raysmag1 = is_x*is_y*(double)(res*res)/(ss2*ss2*(double)nray);
-  double avgmag = raysmag1*(double)(nray-exclude)/(double)(res*res);
-  double avgrayspp = (double)(nray-exclude)/(double)(res*res);
+  float raysmag1 = is_x*is_y*(float)(res*res)/(ss2*ss2*(float)nray);
+  float avgmag = raysmag1*(float)(nray-exclude)/(float)(res*res);
+  float avgrayspp = (float)(nray-exclude)/(float)(res*res);
   //  writePlain(target_dir+"tmp.out", y, res, k, g, ss2, avgmag, avgrayspp);
   //  rename((target_dir+"tmp.out").c_str(),(target_dir+"map.dat").c_str());
   writeBin(target_dir, y, res, k, g, s, ss2, avgmag, avgrayspp);
 }
 void reportProgress(long cycles,long long int nray,long long int exclude,int res,Stopwatch& totalTimer){
   //Report progress
-  double avgrayspp = (double)(nray-exclude)/(double)(res*res);
+  float avgrayspp = (float)(nray-exclude)/(float)(res*res);
   int pc          = (int)floor(100*(nray/CHUNK_SIZE)/cycles);
-  double ex_pc     = 0;
+  float ex_pc     = 0;
   if( nray != 0 ){
-    ex_pc = (double)100.0*exclude/nray;
+    ex_pc = (float)100.0*exclude/nray;
   }
   printf("%3i%% complete, total rays: %12lli, excluded: %12lli (%7.4f%%), avg rays/pxl: %14.8f, ttot: %8.1f\n",pc,nray,exclude,ex_pc,avgrayspp,totalTimer.getTime());
   fflush(stdout);
 }
 
 
-void writeBin(const std::string& target_dir,double** y,int dim,double k,double g,double s,double ss2,double avgmag,double avgrayspp){
+void writeBin(const std::string& target_dir,float** y,int dim,float k,float g,float s,float ss2,float avgmag,float avgrayspp){
   ofstream out_dat( (target_dir+"mapmeta.dat").c_str() );
   out_dat << avgmag << " " << avgrayspp << endl;
   out_dat << dim    << endl;
@@ -240,7 +240,7 @@ void writeBin(const std::string& target_dir,double** y,int dim,double k,double g
   out_bin.close();
 }
 
-void readBin(const std::string& target_dir,double** y,int Nx,int Ny){
+void readBin(const std::string& target_dir,float** y,int Nx,int Ny){
   FILE* ptr_myfile = fopen( (target_dir+"map.bin").c_str() ,"rb");
   int* imap = (int*) calloc(Nx*Ny,sizeof(int));
   fread(imap,sizeof(int),Nx*Ny,ptr_myfile);
@@ -248,7 +248,7 @@ void readBin(const std::string& target_dir,double** y,int Nx,int Ny){
 
   for(long i=0;i<Nx;i++){
     for(long j=0;j<Ny;j++){
-      y[i][j] = (double) imap[i*Ny+j];
+      y[i][j] = (float) imap[i*Ny+j];
     }
   }
 
@@ -256,7 +256,7 @@ void readBin(const std::string& target_dir,double** y,int Nx,int Ny){
 }
 
 
-void writePlain(const std::string& name, double** y, int dim, double k, double g, double ss2, double avgmag, double avgrayspp){
+void writePlain(const std::string& name, float** y, int dim, float k, float g, float ss2, float avgmag, float avgrayspp){
   ofstream out(name.c_str());
 
   out << avgmag << " " << avgrayspp << endl;

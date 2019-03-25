@@ -12,10 +12,10 @@ class Stopwatch
     struct timeval start_time;
 
     //! Time difference between the last start and stop
-    double  diff_time;
+    float  diff_time;
 
     //! TOTAL time difference between starts and stops
-    double  total_time;
+    float  total_time;
 
     //! flag if the stop watch is running
     bool running;
@@ -43,21 +43,21 @@ public:
     //! Time in msec. after start. If the stop watch is still running (i.e. there
     //! was no call to stop()) then the elapsed time is returned, otherwise the
     //! time between the last start() and stop call is returned
-    inline double getTime() const;
+    inline float getTime() const;
 
     //! Added by G.Vernardos.
     //! Set the time to selected value
-    inline void setTime(double time0);
+    inline void setTime(float time0);
 
     //! Mean time to date based on the number of times the stopwatch has been 
     //! _stopped_ (ie finished sessions) and the current total time
-    inline double getAverageTime() const;
+    inline float getAverageTime() const;
 
 private:
     // helper functions
   
     //! Get difference between start time and current time
-    inline double getDiffTime() const;
+    inline float getDiffTime() const;
 };
 
 // functions, inlined
@@ -105,24 +105,24 @@ Stopwatch::reset()
 //! current diff_time sum, otherwise the current summed time difference alone
 //! is returned.
 ////////////////////////////////////////////////////////////////////////////////
-inline double 
+inline float 
 Stopwatch::getTime() const 
 {
     // Return the TOTAL time to date
-    double retval = total_time;
+    float retval = total_time;
     if( running) {
 
         retval += getDiffTime();
     }
 
-    return retval/(double)1000.0;
+    return retval/(float)1000.0;
 }
 ////////////////////////////////////////////////////////////////////////////////
 //! Added by G.Vernardos
 //! Function to add given time(in sec) to the total time(in msec)
 ////////////////////////////////////////////////////////////////////////////////
 inline void
-Stopwatch::setTime(double time0)
+Stopwatch::setTime(float time0)
 {
   total_time += time0*1000.0;
 }
@@ -130,7 +130,7 @@ Stopwatch::setTime(double time0)
 //! Time in msec. for a single run based on the total number of COMPLETED runs
 //! and the total time.
 ////////////////////////////////////////////////////////////////////////////////
-inline double 
+inline float 
 Stopwatch::getAverageTime() const
 {
     return total_time/clock_sessions;
@@ -141,14 +141,14 @@ Stopwatch::getAverageTime() const
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
-inline double
+inline float
 Stopwatch::getDiffTime() const 
 {
   struct timeval t_time;
   gettimeofday( &t_time, 0);
 
   // time difference in milli-seconds
-  return  (double) (1000.0 * ( t_time.tv_sec - start_time.tv_sec) 
+  return  (float) (1000.0 * ( t_time.tv_sec - start_time.tv_sec) 
                 + (0.001 * (t_time.tv_usec - start_time.tv_usec)) );
 }
 

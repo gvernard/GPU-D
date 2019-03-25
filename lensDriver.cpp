@@ -53,17 +53,17 @@ int main(int argc, char* argv[]){
   std::string target_dir       = parameters.target_dir;
   std::string lens_pos         = parameters.lens_pos;
   std::vector<int> device_list = parameters.devices;
-  double kappa_star            = parameters.kappa_star;
-  double kappa_s               = parameters.kappa_s;
-  double s                     = parameters.s;
-  double gamma                 = parameters.gamma;
+  float kappa_star            = parameters.kappa_star;
+  float kappa_s               = parameters.kappa_s;
+  float s                     = parameters.s;
+  float gamma                 = parameters.gamma;
   int    resolution            = parameters.resolution;
-  double source_scale          = parameters.source_scale;
-  double avg_ray_count         = parameters.avg_ray_count;
-  double lens_scale_fudge_1    = parameters.lens_scale_fudge_1;
-  double lens_scale_fudge_2    = parameters.lens_scale_fudge_2;
-  double image_scale_fudge     = parameters.image_scale_fudge;
-  double mass                  = parameters.mass;
+  float source_scale          = parameters.source_scale;
+  float avg_ray_count         = parameters.avg_ray_count;
+  float lens_scale_fudge_1    = parameters.lens_scale_fudge_1;
+  float lens_scale_fudge_2    = parameters.lens_scale_fudge_2;
+  float image_scale_fudge     = parameters.image_scale_fudge;
+  float mass                  = parameters.mass;
   long   cycles                = parameters.cycles;
   long   cycles_done           = parameters.cycles_done;
   //  long long int total_rays     = parameters.total_rays;
@@ -72,14 +72,14 @@ int main(int argc, char* argv[]){
   int    ndevices              = device_list.size();
 
   // Calculate derived physical quantities
-  double  kappa         = kappa_star + kappa_s;
-  double  ray_grid_x    = (0.5 + 2.0*image_scale_fudge) * source_scale / (1.0 - kappa - gamma);
-  double  ray_grid_y    = (0.5 + 2.0*image_scale_fudge) * source_scale / (1.0 - kappa + gamma);
-  double  lens_rad_x    = (0.5*source_scale + lens_scale_fudge_1) / (1.0 - kappa + gamma);
-  double  lens_rad_y    = (0.5*source_scale + lens_scale_fudge_1) / (1.0 - kappa - gamma);
-  double  lens_rad      = sqrt(lens_rad_x*lens_rad_x + lens_rad_y*lens_rad_y) + lens_scale_fudge_2;
+  float  kappa         = kappa_star + kappa_s;
+  float  ray_grid_x    = (0.5 + 2.0*image_scale_fudge) * source_scale / (1.0 - kappa - gamma);
+  float  ray_grid_y    = (0.5 + 2.0*image_scale_fudge) * source_scale / (1.0 - kappa + gamma);
+  float  lens_rad_x    = (0.5*source_scale + lens_scale_fudge_1) / (1.0 - kappa + gamma);
+  float  lens_rad_y    = (0.5*source_scale + lens_scale_fudge_1) / (1.0 - kappa - gamma);
+  float  lens_rad      = sqrt(lens_rad_x*lens_rad_x + lens_rad_y*lens_rad_y) + lens_scale_fudge_2;
   long    lens_count    = (size_t)(kappa_star * lens_rad*lens_rad / mass + 0.5);
-  double  ss2           = source_scale/2.0;
+  float  ss2           = source_scale/2.0;
   // TODO: Eventually 'mass' should be the avg. lens mass
   // The rest of the code considers source_scale to be a radius, i.e., half the side length
 
@@ -109,14 +109,14 @@ int main(int argc, char* argv[]){
 
 
   // Allocate source plane array
-  double** source_plane;
-  source_plane = create2DArray<double>(resolution+1, resolution+1);
+  float** source_plane;
+  source_plane = create2DArray<float>(resolution+1, resolution+1);
   if( mode == "restart" ){
     readBin(target_dir,source_plane,resolution,resolution);
   }
 
 
-  cout << "gpu-d code version : 6.0"                     << endl;
+  cout << "gpu-d code version : 7.0"                     << endl;
   cout << "Output directory : "    << target_dir         << endl;
   cout << "****** Initialization ******"                 << endl;
   cout << " Kappa              = " << kappa              << endl;
@@ -161,37 +161,37 @@ int main(int argc, char* argv[]){
   assert(IP.Nl < LENS_CHUNK && "Number of lenses must be less than 1,000,000");
   
   // Host memory pointers for ray positions
-  double* x1[ndevices];
-  double* x2[ndevices];
-  double* y1[ndevices];
-  double* y2[ndevices];
+  float* x1[ndevices];
+  float* x2[ndevices];
+  float* y1[ndevices];
+  float* y2[ndevices];
   // Device memory pointers for rays, lens positions and mass
-  double* d_x1[ndevices];
-  double* d_x2[ndevices];
-  double* d_p1[ndevices];
-  double* d_p2[ndevices];
-  double* d_lx1[ndevices];
-  double* d_lx2[ndevices];
-  double* d_lm[ndevices];
+  float* d_x1[ndevices];
+  float* d_x2[ndevices];
+  float* d_p1[ndevices];
+  float* d_p2[ndevices];
+  float* d_lx1[ndevices];
+  float* d_lx2[ndevices];
+  float* d_lm[ndevices];
 
   // Allocate Host memory for ray positions
   for(int d=0;d<ndevices;++d){
-    x1[d] = (double*) calloc(CHUNK_SIZE, sizeof(double));
-    x2[d] = (double*) calloc(CHUNK_SIZE, sizeof(double));
-    y1[d] = (double*) calloc(CHUNK_SIZE, sizeof(double));
-    y2[d] = (double*) calloc(CHUNK_SIZE, sizeof(double));
+    x1[d] = (float*) calloc(CHUNK_SIZE, sizeof(float));
+    x2[d] = (float*) calloc(CHUNK_SIZE, sizeof(float));
+    y1[d] = (float*) calloc(CHUNK_SIZE, sizeof(float));
+    y2[d] = (float*) calloc(CHUNK_SIZE, sizeof(float));
   }	
 
   // Allocate Device memory for rays, lens positions and mass (usage of Nleff for correct memory allocation)
 #pragma omp parallel for
   for(int d=0;d<ndevices;d++){
-    cudaMalloc( (void**) &d_x1[d], CHUNK_SIZE*sizeof(double));
-    cudaMalloc( (void**) &d_x2[d], CHUNK_SIZE*sizeof(double));
-    cudaMalloc( (void**) &d_p1[d], CHUNK_SIZE*sizeof(double));
-    cudaMalloc( (void**) &d_p2[d], CHUNK_SIZE*sizeof(double));
-    cudaMalloc( (void**) &d_lx1[d], IP.Nleff*sizeof(double));
-    cudaMalloc( (void**) &d_lx2[d], IP.Nleff*sizeof(double));
-    cudaMalloc( (void**) &d_lm[d],  IP.Nleff*sizeof(double));
+    cudaMalloc( (void**) &d_x1[d], CHUNK_SIZE*sizeof(float));
+    cudaMalloc( (void**) &d_x2[d], CHUNK_SIZE*sizeof(float));
+    cudaMalloc( (void**) &d_p1[d], CHUNK_SIZE*sizeof(float));
+    cudaMalloc( (void**) &d_p2[d], CHUNK_SIZE*sizeof(float));
+    cudaMalloc( (void**) &d_lx1[d], IP.Nleff*sizeof(float));
+    cudaMalloc( (void**) &d_lx2[d], IP.Nleff*sizeof(float));
+    cudaMalloc( (void**) &d_lm[d],  IP.Nleff*sizeof(float));
       
     cudaError cuda_err = cudaGetLastError();
     if( cudaSuccess != cuda_err ){
@@ -203,9 +203,9 @@ int main(int argc, char* argv[]){
   transferTimer.start();
 #pragma omp parallel for
   for(int d=0;d<ndevices;d++){
-    cudaMemcpy(d_lx1[d], IP.lx1, IP.Nl*sizeof(double),cudaMemcpyHostToDevice);
-    cudaMemcpy(d_lx2[d], IP.lx2, IP.Nl*sizeof(double),cudaMemcpyHostToDevice);
-    cudaMemcpy(d_lm[d],  IP.lm,  IP.Nl*sizeof(double),cudaMemcpyHostToDevice);
+    cudaMemcpy(d_lx1[d], IP.lx1, IP.Nl*sizeof(float),cudaMemcpyHostToDevice);
+    cudaMemcpy(d_lx2[d], IP.lx2, IP.Nl*sizeof(float),cudaMemcpyHostToDevice);
+    cudaMemcpy(d_lm[d],  IP.lm,  IP.Nl*sizeof(float),cudaMemcpyHostToDevice);
   
     cudaError cuda_err = cudaGetLastError();
     if( cudaSuccess != cuda_err ){
@@ -224,21 +224,21 @@ int main(int argc, char* argv[]){
     totalTimer.setTime(parameters.ttot);
   }
 
-  double intervals;
+  float intervals;
   if( lens_count > 1300000 ){
     intervals = 40.;
   } else {
     intervals = 10.;
   }
-  double last_out = cycles/intervals;
-  while ( last_out < (double)cycles_done ){
-    last_out += (double)cycles/intervals;
+  float last_out = cycles/intervals;
+  while ( last_out < (float)cycles_done ){
+    last_out += (float)cycles/intervals;
   }
   reportProgress(cycles,nray,exclude,resolution,totalTimer);
 
 
 
-  double* yZeros = (double*) calloc(CHUNK_SIZE,sizeof(double));//if this is done inside the loop then I keep allocating memory until I run out of it
+  float* yZeros = (float*) calloc(CHUNK_SIZE,sizeof(float));//if this is done inside the loop then I keep allocating memory until I run out of it
   for(long m=cycles_done;m<cycles;m+=ndevices){
 
     // Generate random starting ray positions
@@ -257,11 +257,11 @@ int main(int argc, char* argv[]){
     transferTimer.start();
 #pragma omp parallel for
     for(int d=0;d<ndevices;d++){
-      cudaMemcpy(d_x1[d], x1[d], CHUNK_SIZE*sizeof(double), cudaMemcpyHostToDevice);
-      cudaMemcpy(d_x2[d], x2[d], CHUNK_SIZE*sizeof(double), cudaMemcpyHostToDevice);
+      cudaMemcpy(d_x1[d], x1[d], CHUNK_SIZE*sizeof(float), cudaMemcpyHostToDevice);
+      cudaMemcpy(d_x2[d], x2[d], CHUNK_SIZE*sizeof(float), cudaMemcpyHostToDevice);
       //Overwrite the partial ys with zeros <- NECESSARY
-      cudaMemcpy(d_p1[d], yZeros, CHUNK_SIZE*sizeof(double), cudaMemcpyHostToDevice);
-      cudaMemcpy(d_p2[d], yZeros, CHUNK_SIZE*sizeof(double), cudaMemcpyHostToDevice);
+      cudaMemcpy(d_p1[d], yZeros, CHUNK_SIZE*sizeof(float), cudaMemcpyHostToDevice);
+      cudaMemcpy(d_p2[d], yZeros, CHUNK_SIZE*sizeof(float), cudaMemcpyHostToDevice);
       
       cudaError cuda_err = cudaGetLastError();
       if( cudaSuccess != cuda_err ){
@@ -281,8 +281,8 @@ int main(int argc, char* argv[]){
     // Transfer final ray positions from Device to Host
 #pragma omp parallel for
     for(int d=0;d<ndevices;d++){
-      cudaMemcpy(y1[d], d_x1[d], CHUNK_SIZE*sizeof(double), cudaMemcpyDeviceToHost);
-      cudaMemcpy(y2[d], d_x2[d], CHUNK_SIZE*sizeof(double), cudaMemcpyDeviceToHost);
+      cudaMemcpy(y1[d], d_x1[d], CHUNK_SIZE*sizeof(float), cudaMemcpyDeviceToHost);
+      cudaMemcpy(y2[d], d_x2[d], CHUNK_SIZE*sizeof(float), cudaMemcpyDeviceToHost);
 
       cudaError cuda_err = cudaGetLastError();
       if( cudaSuccess != cuda_err ){
@@ -305,7 +305,7 @@ int main(int argc, char* argv[]){
     // Print current status every intervals %
     if( m >= last_out ) {
 
-      last_out += (double)cycles/intervals;
+      last_out += (float)cycles/intervals;
       writeTimer.start();
       writeSnapshot(target_dir,source_plane,kappa,gamma,s,ss2,ray_grid_x,ray_grid_y,nray,exclude,resolution);
       writeTimer.stop();

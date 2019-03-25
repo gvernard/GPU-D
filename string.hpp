@@ -18,7 +18,12 @@ namespace mycuda {
 	template<typename T>
 	inline bool fromString(const string &s, T &t){
 		std::istringstream ss(s);
-		return (ss >> t);
+		ss >> t;
+		if( ss.fail() ){
+		  return false;
+		} else {
+		  return true;
+		}
 	}
 
 } //namespace mycuda
