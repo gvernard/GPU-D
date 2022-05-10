@@ -100,17 +100,17 @@ __global__ void lensFinishCalc(float* d_x1,float* d_x2,float* d_p1,float* d_p2, 
 //MAIN CALCULATION: Atomic add on GPU memory locations
 //==========================================================
 __device__ inline void atomicFloatAdd(float* address,float val){
-  //       int i_val = __float_as_int(val);
-       int i_val = __float2int_rn(val);
-       int tmp0 = 0;
-       int tmp1;
-
-       while( (tmp1 = atomicCAS((int *)address, tmp0, i_val)) != tmp0 )
-       {
-               tmp0  = tmp1;
-	       //               i_val = __float_as_int(val + __int_as_float(tmp1));
-               i_val = __float2int_rn(val + __int2float_rn(tmp1));
-       }
+  int i_val = __float_as_int(val);
+  //int i_val = __float2int_rn(val);
+  int tmp0 = 0;
+  int tmp1;
+  
+  while( (tmp1 = atomicCAS((int *)address, tmp0, i_val)) != tmp0 )
+    {
+      tmp0  = tmp1;
+      //               i_val = __float_as_int(val + __int_as_float(tmp1));
+      i_val = __float2int_rn(val + __int2float_rn(tmp1));
+    }
 }
 
 

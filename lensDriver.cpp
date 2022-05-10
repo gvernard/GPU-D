@@ -57,15 +57,15 @@ int main(int argc, char* argv[]){
   float kappa_s               = parameters.kappa_s;
   float s                     = parameters.s;
   float gamma                 = parameters.gamma;
-  int    resolution            = parameters.resolution;
+  int   resolution            = parameters.resolution;
   float source_scale          = parameters.source_scale;
   float avg_ray_count         = parameters.avg_ray_count;
   float lens_scale_fudge_1    = parameters.lens_scale_fudge_1;
   float lens_scale_fudge_2    = parameters.lens_scale_fudge_2;
   float image_scale_fudge     = parameters.image_scale_fudge;
   float mass                  = parameters.mass;
-  long   cycles                = parameters.cycles;
-  long   cycles_done           = parameters.cycles_done;
+  long  cycles                = parameters.cycles;
+  long  cycles_done           = parameters.cycles_done;
   //  long long int total_rays     = parameters.total_rays;
   long long int nray           = parameters.nray;
   long long int exclude        = parameters.exclude;
@@ -304,7 +304,6 @@ int main(int argc, char* argv[]){
 	
     // Print current status every intervals %
     if( m >= last_out ) {
-
       last_out += (float)cycles/intervals;
       writeTimer.start();
       writeSnapshot(target_dir,source_plane,kappa,gamma,s,ss2,ray_grid_x,ray_grid_y,nray,exclude,resolution);
