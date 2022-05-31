@@ -36,7 +36,7 @@ void printUsage(char* argv[]){
   cout << "Usage: " << argv[0] << " [options]" << endl;
   cout << "  -mode,     --mode                        Set the mode to 'normal','resubmit' (same) or 'restart'" << endl;
   cout << "  -td,       --target_dir                  Set the I/O directory to an existing directory" << endl;
-  cout << "  -lens_pos, --lens_pos sn                 Set the lens positions to seed:snnn,random:r,or read from file 'lens_pos.dat':c" << endl;
+  cout << "  -lens_pos, --lens_pos sn                 Set the lens positions to seed:snnn,random:r,or read from file 'lens_pos.dat':c, which should be in target-dir" << endl;
   cout << "  -g,        --gamma f                     Set the global shear to f" << endl;
   cout << "  -ss,       --source-scale f              Set the physical source scale to f" << endl;
   cout << "  -m,        --lens-mass f                 Set the lens mass to f" << endl;
@@ -95,7 +95,8 @@ int setParams(int argc,char* argv[],params &parameters){
 	return 1;
       }
     } else if( strcmp(argv[i], "--target_dir")==0 || strcmp(argv[i], "-td")==0 ) {
-      fromString(argv[++i],target_dir);
+      std::string arg = argv[++i];
+      target_dir = arg;
       char *temp = (char*) target_dir.c_str();
       if ( opendir(temp) == NULL ){
 	cout << "Error: target directory does not exist" << endl;
